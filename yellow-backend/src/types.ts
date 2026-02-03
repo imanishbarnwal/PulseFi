@@ -9,6 +9,14 @@ export interface YellowSessionConfig {
     privateKey: string; // Backend wallet (Counterparty)
 }
 
+export interface ActionLog {
+    id: string;
+    type: string;
+    description: string;
+    cost: number;
+    timestamp: number;
+}
+
 export interface SessionState {
     sessionId: string;
     userAddress: string;
@@ -17,13 +25,14 @@ export interface SessionState {
     initialBalance: number;
     remainingBalance: number;
     actionsExecuted: number;
+    actionHistory: ActionLog[];
     status: 'ACTIVE' | 'SETTLED';
     settlementTxHash?: string;
 }
 
 export interface StartSessionResponse {
     sessionId: string;
-    sessionKey: string;
+    // sessionKey removed - secure backend only
     startTimestamp: number;
 }
 

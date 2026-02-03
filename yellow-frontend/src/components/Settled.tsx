@@ -25,8 +25,18 @@ export const Settled: React.FC<Props> = ({ data, onReset }) => {
                     <span className="text-white">{data.actionsExecuted}</span>
                 </div>
                 <div className="text-left pt-4">
-                    <div className="text-xs text-slate-500 uppercase">Settlement Hash</div>
+                    <div className="text-xs text-slate-500 uppercase">This is the only on-chain transaction</div>
                     <div className="text-xs font-mono text-yellow-500 break-all">{data.settlementTxHash}</div>
+                    {data.explorerUrl && (
+                        <a
+                            href={data.explorerUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-400 hover:text-blue-300 underline mt-1 block"
+                        >
+                            View on BaseScan ↗
+                        </a>
+                    )}
                 </div>
             </div>
 

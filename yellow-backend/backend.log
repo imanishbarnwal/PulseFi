@@ -1,0 +1,12 @@
+
+> yellow-session-backend@1.0.0 start
+> ts-node src/index.ts
+
+[ChainValidator] Checking connection to: https://sepolia.base.org
+[ChainValidator] ✅ Connected to Base Sepolia (Chain ID: 84532). Safe to proceed.
+[YellowService] Initialized with backend wallet: 0x9FBB19112a2a7731E787058cC0e84c16e4cD7aB1
+[YellowService] Connecting to Nitrolite at wss://clearnode.testnet.yellow.network...
+[YellowService] Connected.
+Yellow Session Backend running on http://localhost:3000
+Use POST /start-session to begin.
+Backend exited with code 137

@@ -35,10 +35,11 @@ const PORT = process.env.PORT || 3000;
     const sessionController = new SessionController(yellowService);
 
     // Routes
+    // Routes
     app.post('/start-session', sessionController.startSession);
     app.post('/end-session', sessionController.endSession);
+    app.get('/session/:sessionId', sessionController.getSession);
 
-    // Extra endpoint to simulate game actions/spending
     // Extra endpoint to simulate game actions/spending
     app.post('/action', sessionController.executeAction);
 

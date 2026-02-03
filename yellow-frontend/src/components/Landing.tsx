@@ -12,9 +12,7 @@ export const Landing: React.FC<Props> = ({ onStart }) => {
                 Yellow Session Trader
             </h1>
             <p className="text-xl text-slate-300">
-                Experience the power of <b>Session Keys</b>. Lock funds once, and let our
-                AI Agent execute off-chain trades at lightning speed with zero interruptions.
-                Settlement happens only when you say so.
+                Experience <b>Session Keys</b>: Lock funds, let our AI Agent trade off-chain instantly, and settle on-chain only when you say so.
             </p>
 
             <button

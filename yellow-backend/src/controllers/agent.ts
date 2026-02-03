@@ -9,7 +9,7 @@ export class AgentController {
     }
 
     startAgent = async (req: Request, res: Response) => {
-        const { sessionId, checkIntervalMs } = req.body;
+        const { sessionId, checkIntervalMs, mode } = req.body;
 
         if (!sessionId) {
             return res.status(400).json({ error: 'sessionId is required' });
@@ -17,7 +17,8 @@ export class AgentController {
 
         const agent = await this.agentService.startAgent({
             sessionId,
-            checkIntervalMs: checkIntervalMs ? parseInt(checkIntervalMs) : 10000 // Default 10s for easier demo? User asked for 60s. I'll respect input or default.
+            checkIntervalMs: checkIntervalMs ? parseInt(checkIntervalMs) : 10000,
+            mode: mode || 'REBALANCE' // Default to Rebalance if not specified
         });
 
         if (!agent) {
