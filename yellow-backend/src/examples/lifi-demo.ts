@@ -1,4 +1,4 @@
-import { LifiService } from './services/lifi';
+import { LifiService } from '../services/lifi';
 import { ethers } from 'ethers';
 
 // ... existing code ...

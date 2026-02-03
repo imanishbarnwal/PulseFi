@@ -21,11 +21,14 @@ export interface AgentStatus {
     isRunning: boolean;
     logs: string[];
     tradeCount: number;
+    remainingBalance: number;
+    escrowBalance: number;
+    isDemo: boolean;
 }
 
 export const api = {
-    adminStartSession: async (walletAddress: string): Promise<StartSessionResponse> => {
-        const res = await axios.post(`${API_URL}/start-session`, { walletAddress });
+    adminStartSession: async (walletAddress: string, amount: number): Promise<StartSessionResponse> => {
+        const res = await axios.post(`${API_URL}/start-session`, { walletAddress, amount });
         return res.data;
     },
 
@@ -34,13 +37,23 @@ export const api = {
         return res.data;
     },
 
-    startAgent: async (sessionId: string) => {
-        const res = await axios.post(`${API_URL}/start-agent`, { sessionId, checkIntervalMs: 5000 });
+    startAgent: async (sessionId: string, mode: string = 'REBALANCE') => {
+        const res = await axios.post(`${API_URL}/start-agent`, { sessionId, checkIntervalMs: 5000, mode });
         return res.data;
     },
 
     getAgentStatus: async (sessionId: string): Promise<AgentStatus> => {
         const res = await axios.get(`${API_URL}/agent/${sessionId}`);
+        return res.data;
+    },
+
+    getEscrowAddress: async (): Promise<string> => {
+        const res = await axios.get(`${API_URL}/api/escrow-address`);
+        return res.data.address;
+    },
+
+    forceTrade: async (sessionId: string) => {
+        const res = await axios.post(`${API_URL}/force-trade`, { sessionId });
         return res.data;
     }
 };

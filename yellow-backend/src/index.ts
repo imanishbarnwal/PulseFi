@@ -5,6 +5,7 @@ import { SessionController } from './controllers/session';
 import { YellowService } from './services/yellow';
 import { AgentService } from './services/agent';
 import { AgentController } from './controllers/agent';
+import router from './routes';
 
 dotenv.config();
 
@@ -39,6 +40,11 @@ const PORT = process.env.PORT || 3000;
     app.post('/start-session', sessionController.startSession);
     app.post('/end-session', sessionController.endSession);
     app.get('/session/:sessionId', sessionController.getSession);
+    app.get('/session/:sessionId/decisions', sessionController.getDecisions);
+    app.get('/decisions', sessionController.getDecisions);
+    app.get('/session/:sessionId/summary', sessionController.getSummary);
+    // app.get('/escrow-address', sessionController.getEscrowAddress); // Replaced by router
+    app.use('/api', router);
 
     // Extra endpoint to simulate game actions/spending
     app.post('/action', sessionController.executeAction);
@@ -46,11 +52,12 @@ const PORT = process.env.PORT || 3000;
     // Agent Routes
     // Agent Routes moved up
 
-    const agentService = new AgentService();
+    const agentService = new AgentService(yellowService);
     const agentController = new AgentController(agentService);
 
     app.post('/start-agent', agentController.startAgent);
     app.post('/stop-agent', agentController.stopAgent);
+    app.post('/force-trade', agentController.forceTrade);
     app.get('/agent/:sessionId', agentController.getAgentStatus);
 
     app.listen(PORT, () => {

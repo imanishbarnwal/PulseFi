@@ -1,10 +1,11 @@
-import { SessionState } from '../types';
+import { SessionState, AgentDecision } from '../types';
 
 // In-memory store
 const sessions: Map<string, SessionState> = new Map();
 
 export const SessionStore = {
     create: (session: SessionState) => {
+        if (!session.decisions) session.decisions = [];
         sessions.set(session.sessionId, session);
         console.log(`[Storage] Session ${session.sessionId} created.`);
     },
@@ -21,7 +22,16 @@ export const SessionStore = {
             // console.log(`[Storage] Session ${sessionId} updated.`);
             return updatedSession;
         }
-        return null;
+    },
+
+    addDecision: (sessionId: string, decision: AgentDecision) => {
+        const session = sessions.get(sessionId);
+        if (session) {
+            if (!session.decisions) session.decisions = [];
+            session.decisions.push(decision);
+            sessions.set(sessionId, session);
+            // console.log(`[Storage] Decision added to ${sessionId}`);
+        }
     },
 
     getAll: () => Array.from(sessions.values())

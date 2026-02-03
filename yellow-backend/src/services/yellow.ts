@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 // import { NitroliteSDK, Channel, Session } from '@erc7824/nitrolite'; // Hypothetical imports
-import { SessionState, YellowSessionConfig } from '../types';
+import { SessionState, YellowSessionConfig, EndSessionResponse } from '../types';
+import { SessionStore } from '../store/sessionStore';
 
 /**
  * Service to handle Yellow Network interactions.
@@ -40,123 +41,90 @@ export class YellowService {
 
     /**
      * Creates a new session on the Yellow Network.
-     * In a real implementation, this would:
-     * 1. Create a state channel or updating an existing one.
-     * 2. Lock funds off-chain (virtual update) or on-chain deposit.
-     * 3. Generate a session key for the user to sign actions with.
+     * 1. Performs on-chain transferFrom(user -> escrow) for USDC.
+     * 2. Generates ephemeral session Key.
      */
     async startSession(userAddress: string, amount: number): Promise<{ sessionId: string, sessionKey: string }> {
-        // Strict Validation
-        const addressRegex = /^0x[a-fA-F0-9]{40}$/;
-        if (!addressRegex.test(userAddress)) {
-            throw new Error("Invalid user address. Must be a 0x-prefixed EVM address.");
+        const USDC_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
+        const ERC20_ABI = [
+            'function transferFrom(address from, address to, uint256 amount) returns (bool)',
+            'function allowance(address owner, address spender) view returns (uint256)'
+        ];
+
+        console.log(`[YellowService] Starting session escrow for ${userAddress} with ${amount} USDC`);
+
+        try {
+            const network = new ethers.Network('base-sepolia', 84532);
+            const provider = new ethers.JsonRpcProvider('https://sepolia.base.org', network);
+            const backendSigner = this.wallet.connect(provider);
+            const usdcContract = new ethers.Contract(USDC_ADDRESS, ERC20_ABI, backendSigner);
+
+            const amountBase = ethers.parseUnits(amount.toString(), 6);
+
+            console.log(`[YellowService] Executing transferFrom(${userAddress} -> ${this.wallet.address})...`);
+
+            // This requires the user to have approved this.wallet.address already
+            const tx = await usdcContract.transferFrom(userAddress, this.wallet.address, amountBase);
+            console.log(`[YellowService] Escrow Tx Broadcast: ${tx.hash}`);
+            await tx.wait();
+            console.log(`[YellowService] Escrow Tx Confirmed. Funds locked.`);
+
+            const sessionWallet = ethers.Wallet.createRandom();
+            const sessionId = ethers.hexlify(ethers.randomBytes(16));
+
+            return {
+                sessionId,
+                sessionKey: sessionWallet.privateKey,
+            };
+        } catch (error: any) {
+            console.error(`[YellowService] Escrow start failed: ${error.message}`);
+            throw new Error(`Failed to lock funds in escrow: ${error.message}`);
         }
-
-        // 1. Generate a session key pair (ephemeral key for this session)
-        const sessionWallet = ethers.Wallet.createRandom();
-        const sessionId = ethers.hexlify(ethers.randomBytes(16)); // Unique ID
-
-        console.log(`[YellowService] Starting session for ${userAddress} with ${amount} USDC`);
-
-        // Simulate locking funds logic via SDK
-        // const channel = await this.sdk.openChannel({ counterparty: userAddress, ... });
-        // await channel.deposit(amount);
-
-        console.log(`[YellowService] Funds locked (Logical). Session Key generated: ${sessionWallet.address}`);
-
-        // Return the session ID and the PRIVATE key of the session wallet 
-        // (In some models, the USER generates the key and sends the public part. 
-        // Here we generate it for simplicity as per requirements "Generate a session key")
-        return {
-            sessionId,
-            sessionKey: sessionWallet.privateKey,
-        };
     }
 
     /**
      * Settles the session on the Yellow Network.
-     * Triggers the final on-chain settlement transaction.
+     * Triggers the final on-chain settlement transaction (Escrow -> User).
      */
-    async settleSession(session: SessionState): Promise<{ txHash: string, finalToUser: number }> {
-        // 1. Off-Chain Logic Verification
+    async settleSession(session: SessionState): Promise<EndSessionResponse> {
         console.log(`[YellowService] Preparing settlement for Session ${session.sessionId}...`);
 
         const finalBalance = session.remainingBalance;
         const userAddress = session.userAddress;
 
-        // Strict Validation
-        console.log(`[YellowService] Performing Pre-Settlement Checks:`);
+        // Metrics Calculation
+        const totalTrades = session.actionHistory?.filter(a => a.type === 'REBALANCE').length || 0;
+        const gasSpentUSD = session.actionHistory?.reduce((sum, a) => sum + a.cost, 0) || 0;
 
-        // 1. Address Integrity
-        const addressRegex = /^0x[a-fA-F0-9]{40}$/;
-        if (!addressRegex.test(userAddress)) {
-            throw new Error(`Critical: Invalid user address. Must be a 0x-prefixed EVM address. Got: ${userAddress}`);
-        }
-        console.log(`   - [OK] User Address: ${userAddress}`);
+        // Gas Saved: If each action was a separate mainnet-style tx ($0.50 each)
+        // versus the optimized internal state updates.
+        const normalFlowCost = (session.actionsExecuted || 0) * 0.50;
+        const gasSavedUSD = Math.max(0, normalFlowCost - gasSpentUSD);
 
-        // 2. Balance Logic
-        if (finalBalance < 0) {
-            throw new Error(`Critical: Negative balance detected (${finalBalance}). Action history likely invalid.`);
-        }
-        console.log(`   - [OK] Final Balance: ${finalBalance} (Positive confirmed)`);
-
-        // 3. User Identity Match (Implicit in flow, but good practice to log)
-        if (userAddress.toLowerCase() !== session.userAddress.toLowerCase()) {
-            throw new Error("Critical: Session address mismatch during settlement.");
-        }
-        console.log(`[YellowService] Verified State :: Actions Executed: ${session.actionsExecuted}`);
+        const USDC_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
+        const ERC20_ABI = ['function transfer(address to, uint256 amount) returns (bool)'];
 
         try {
-            // 2. On-Chain Execution (Backend Wallet)
-
-            // Configure Provider (Explicit Base Sepolia + Disable ENS)
             const network = new ethers.Network('base-sepolia', 84532);
-            (network as any).ensAddress = null; // Explicitly disable ENS resolution
-
-            const provider = new ethers.JsonRpcProvider('https://sepolia.base.org', network, {
-                staticNetwork: network
-            });
-
-            // Connect Backend Signer (Relayer)
+            const provider = new ethers.JsonRpcProvider('https://sepolia.base.org', network);
             const backendSigner = this.wallet.connect(provider);
-            const signerAddress = await backendSigner.getAddress();
+            const usdcContract = new ethers.Contract(USDC_ADDRESS, ERC20_ABI, backendSigner);
 
-            // Pre-Broadcast Logs (Deterministic Check)
-            console.log(`[YellowService] Settlement Configuration:`);
-            console.log(`   - Signer (Relayer): ${signerAddress}`);
-            console.log(`   - Recipient (User): ${userAddress}`);
-            console.log(`   - Chain ID: 84532 (Base Sepolia)`);
-            console.log(`   - Amount: 0 ETH (Data: Proof of Balance ${finalBalance} USDC)`);
+            const amountBase = ethers.parseUnits(finalBalance.toFixed(2), 6);
 
-            console.log(`[YellowService] Broadcasting tx to Base Sepolia...`);
+            console.log(`[YellowService] Releasing Escrow: ${finalBalance.toFixed(2)} USDC -> ${userAddress}...`);
 
-            // Construct Settlement Transaction
-            // 0 ETH value, but carries the "Proof of Balance" in data
-            const payload = `Yellow Settlement: ${session.sessionId} | Final: ${finalBalance} USDC`;
-            const txRequest = {
-                to: userAddress,
-                value: 0n,
-                data: ethers.hexlify(ethers.toUtf8Bytes(payload))
-            };
-
-            // Send
-            const tx = await backendSigner.sendTransaction(txRequest);
-            console.log(`[YellowService] Tx hash: ${tx.hash}`);
-
-            // Wait
-            console.log(`[YellowService] Waiting for confirmation...`);
-            const receipt = await tx.wait();
-
-            if (!receipt) throw new Error("Transaction receipt missing");
-
-            console.log(`[YellowService] ✅ Settlement Confirmed in block ${receipt.blockNumber}`);
-            console.log(`[YellowService] Gas Used: ${receipt.gasUsed.toString()}`);
+            const tx = await usdcContract.transfer(userAddress, amountBase);
+            console.log(`[YellowService] Settlement Tx hash: ${tx.hash}`);
+            await tx.wait();
 
             return {
-                txHash: receipt.hash,
-                finalToUser: finalBalance
+                settlementTxHash: tx.hash,
+                finalBalance: finalBalance,
+                totalTrades,
+                gasSpentUSD,
+                gasSavedUSD
             };
-
         } catch (error: any) {
             console.error(`[YellowService] ❌ Settlement Failed: ${error.message}`);
             throw new Error(`On-chain settlement failed: ${error.message}`);
@@ -167,9 +135,45 @@ export class YellowService {
      * Execute an off-chain action (logic only, updates state)
      */
     async executeAction(session: SessionState, cost: number) {
-        // In a real state channel, this involves verifying a signature from the user's session key
-        // and updating the channel state.
         console.log(`[YellowService] Executing off-chain action. Cost: ${cost}`);
         return true; // Success
+    }
+
+    getWalletAddress(): string {
+        return this.wallet.address;
+    }
+
+    getSigner(provider: ethers.Provider): ethers.Signer {
+        return this.wallet.connect(provider);
+    }
+
+    /**
+     * Verifies that the user has approved the backend escrow address 
+     * to spend the required USDC amount.
+     */
+    async verifyAllowance(userAddress: string, amount: number): Promise<boolean> {
+        const USDC_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
+        const ERC20_ABI = ['function allowance(address owner, address spender) view returns (uint256)'];
+
+        try {
+            const network = new ethers.Network('base-sepolia', 84532);
+            const provider = new ethers.JsonRpcProvider('https://sepolia.base.org', network);
+            const usdcContract = new ethers.Contract(USDC_ADDRESS, ERC20_ABI, provider);
+
+            const allowance = await usdcContract.allowance(userAddress, this.wallet.address);
+
+            // USDC has 6 decimals
+            const requiredAllowance = ethers.parseUnits(amount.toString(), 6);
+
+            console.log(`[YellowService] Checking allowance for ${userAddress} -> ${this.wallet.address}`);
+            console.log(`[YellowService] Current: ${allowance.toString()} | Required: ${requiredAllowance.toString()}`);
+
+            return allowance >= requiredAllowance;
+        } catch (error: any) {
+            console.error(`[YellowService] Allowance check failed: ${error.message}`);
+            // In demo mode or if RPC fails, we might want to return true to not block the presenter
+            // but for "Real USDC" request, we should return false.
+            return false;
+        }
     }
 }

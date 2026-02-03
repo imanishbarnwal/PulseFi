@@ -17,6 +17,19 @@ export interface ActionLog {
     timestamp: number;
 }
 
+export type AgentDecisionType = 'ROUTE_CHECK' | 'MARKET_SCAN' | 'EXECUTION' | 'NO_OP';
+
+export interface AgentDecision {
+    timestamp: number;
+    decisionType: AgentDecisionType;
+    reasoning: string[];
+    confidence: number;
+    impactEstimate: string;
+    data?: any;
+}
+
+export type AgentStrategy = 'ACTIVE_REBALANCE' | 'HIGH_FREQ_SCAN' | 'IDLE_LOG_ONLY';
+
 export interface SessionState {
     sessionId: string;
     userAddress: string;
@@ -24,8 +37,11 @@ export interface SessionState {
     startTime: number;
     initialBalance: number;
     remainingBalance: number;
+    escrowBalance: number;
     actionsExecuted: number;
     actionHistory: ActionLog[];
+    decisions: AgentDecision[];
+    strategy?: AgentStrategy;
     status: 'ACTIVE' | 'SETTLED';
     settlementTxHash?: string;
 }
@@ -39,4 +55,7 @@ export interface StartSessionResponse {
 export interface EndSessionResponse {
     settlementTxHash: string;
     finalBalance: number;
+    totalTrades: number;
+    gasSpentUSD: number;
+    gasSavedUSD: number;
 }
