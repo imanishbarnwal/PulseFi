@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '../api';
 import { ethers } from 'ethers';
 
@@ -22,12 +22,18 @@ export const Deposit: React.FC<Props> = ({ onSessionStarted }) => {
         'function approve(address spender, uint256 amount) returns (bool)'
     ];
 
+    useEffect(() => {
+        if (address && escrowAddress) {
+            checkAllowance(address, escrowAddress);
+        }
+    }, [address, escrowAddress]);
+
     const checkAllowance = async (userAddress: string, escrow: string) => {
         try {
             const provider = new ethers.BrowserProvider((window as any).ethereum);
             const usdc = new ethers.Contract(USDC_ADDRESS, USDC_ABI, provider);
             const allowance = await usdc.allowance(userAddress, escrow);
-            const required = ethers.parseUnits('10', 6); // Minimum possible deposit
+            const required = ethers.parseUnits('10', 6);
             setNeedsApproval(allowance < required);
         } catch (err) {
             console.error("Allowance check failed:", err);
@@ -43,16 +49,13 @@ export const Deposit: React.FC<Props> = ({ onSessionStarted }) => {
             const signer = await provider.getSigner();
             const usdc = new ethers.Contract(USDC_ADDRESS, USDC_ABI, signer);
 
-            console.log(`[Frontend] Approving ${escrowAddress} to spend 100 USDC...`);
+            console.log(`[Protocol] Requesting USDC Approval for Escrow: ${escrowAddress}`);
             const tx = await usdc.approve(escrowAddress, ethers.parseUnits('100', 6));
             setApprovalTx(tx.hash);
-
             await tx.wait();
-            console.log(`[Frontend] Approval confirmed: ${tx.hash}`);
             setNeedsApproval(false);
         } catch (err: any) {
-            console.error(err);
-            setError("Approval failed. Please try again.");
+            setError("Approval rejected or failed. Ensure Base Sepolia gas is present.");
         } finally {
             setLoading(false);
         }
@@ -60,188 +63,150 @@ export const Deposit: React.FC<Props> = ({ onSessionStarted }) => {
 
     const connectWallet = async () => {
         if (!(window as any).ethereum) {
-            setError("MetaMask not found!");
+            setError("Web3 provider missing. Install MetaMask to interact with Base Sepolia.");
             return;
         }
         try {
             const provider = new ethers.BrowserProvider((window as any).ethereum);
+            await provider.send("eth_requestAccounts", []);
             const signer = await provider.getSigner();
             const addr = await signer.getAddress();
             setAddress(addr);
 
-            // Get Escrow for approval checks
             const escrow = await api.getEscrowAddress();
             setEscrowAddress(escrow);
-            await checkAllowance(addr, escrow);
-
             setError(null);
         } catch (err) {
-            console.error(err);
-            setError("Failed to connect wallet.");
+            setError("Wallet connection aborted.");
         }
     };
 
-    const handleDeposit = async (amount: number) => {
+    const handleVaultConfig = async (amount: number) => {
         if (!address) return;
         setLoading(true);
         setError(null);
         try {
-            console.log(`[Frontend] Starting session for connected user: ${address} | Amount: ${amount}`);
-
+            console.log(`[Protocol] Dispatching createSession(sessionId, amount) to ${escrowAddress}`);
             const data = await api.adminStartSession(address, amount);
 
-            // Pass selected strategy
+            // Step 2: Initialize Agent Solver Off-Chain
             await api.startAgent(data.sessionId, strategy);
 
             onSessionStarted(data);
         } catch (err: any) {
-            console.error(err);
-            const msg = err.response?.data?.error || "Failed to start session. Is Backend running?";
-            setError(msg);
+            setError(err.response?.data?.error || "On-chain vault initialization failed. Verify balance.");
         } finally {
             setLoading(false);
         }
     };
 
-    const strategies = [
-        {
-            id: 'ACTIVE_REBALANCE',
-            title: 'Active Rebalancing',
-            who: 'Liquidity Providers',
-            risk: 'Medium',
-            desc: 'Optimizes portfolio using best routes (LiFi vs Uniswap). 1 settlement tx.'
-        },
-        {
-            id: 'HIGH_FREQ_SCAN',
-            title: 'High-Freq Scanning',
-            who: 'Arbitrageurs',
-            risk: 'Low (No execution)',
-            desc: 'Monitors market volatility every 500ms. Logs opportunities only.'
-        },
-        {
-            id: 'IDLE_LOG_ONLY',
-            title: 'Passive Observer',
-            who: 'Researchers',
-            risk: 'Zero',
-            desc: 'Maintains session state without checking markets. Saves credits.'
-        }
-    ];
-
     return (
-        <div className="flex flex-col items-center space-y-6 animate-fade-in w-full max-w-md">
-            <h2 className="text-3xl font-bold text-white">Fund Your Session</h2>
+        <div className="flex flex-col items-center space-y-8 animate-fade-in w-full max-w-xl">
+            <div className="text-center space-y-2">
+                <h2 className="text-4xl font-black text-white tracking-tight uppercase italic">Vault Initialization</h2>
+                <p className="text-slate-500 text-[11px] font-bold uppercase tracking-[0.2em]">Deploying immutable session-key escrow</p>
+            </div>
 
-            {!address ? (
-                <div className="w-full flex flex-col items-center space-y-4">
-                    <p className="text-slate-400">Connect your wallet to begin.</p>
+            <div className="w-full fintech-card space-y-10 !p-10 !bg-white/[0.03]">
+                {/* 1. Wallet Status (Technical) */}
+                {!address ? (
                     <button
                         onClick={connectWallet}
-                        className="px-6 py-3 bg-yellow-400 text-black font-bold rounded-lg hover:bg-yellow-300 transition"
+                        className="w-full py-5 bg-white text-black font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-slate-100 transition shadow-2xl active:scale-[0.98]"
                     >
-                        Connect Wallet
+                        Initialize Wallet Path
                     </button>
-                    {error && <div className="text-red-400 text-sm">{error}</div>}
-                </div>
-            ) : (
-                <div className="w-full flex flex-col items-center space-y-4">
-                    <div className="text-xs font-mono text-yellow-400 bg-yellow-400/10 px-3 py-1 rounded-full border border-yellow-400/20">
-                        Connected: {address}
+                ) : (
+                    <div className="flex items-center justify-between px-5 py-4 bg-black/40 rounded-2xl border border-white/5 font-mono">
+                        <div className="flex items-center space-x-3">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Active Signer</span>
+                        </div>
+                        <span className="text-[10px] text-white/80">{address}</span>
                     </div>
+                )}
 
-                    <div className="w-full">
-                        <label className="text-sm text-slate-500 mb-3 block uppercase tracking-wide font-bold">Select Agent Strategy</label>
-                        <div className="space-y-3 mb-6">
-                            {strategies.map((s) => (
-                                <div
-                                    key={s.id}
-                                    onClick={() => setStrategy(s.id)}
-                                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 flex flex-col space-y-2 relative overflow-hidden group
-                                        ${strategy === s.id
-                                            ? 'border-yellow-400 bg-yellow-400/10 shadow-[0_0_15px_rgba(250,204,21,0.15)]'
-                                            : 'border-slate-800 bg-slate-900/50 hover:border-slate-600 hover:bg-slate-800'
-                                        }`}
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <h3 className={`font-bold ${strategy === s.id ? 'text-yellow-400' : 'text-white'}`}>{s.title}</h3>
-                                        <span className="text-[10px] uppercase font-mono bg-black/30 px-2 py-1 rounded text-slate-400 border border-white/5">
-                                            {s.who}
-                                        </span>
+                {address && (
+                    <>
+                        {/* 2. Solver Intelligence Configuration */}
+                        <div className="space-y-4">
+                            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600 block ml-1">Off-Chain Intelligence Protocol</label>
+                            <div className="grid grid-cols-1 gap-3">
+                                {[
+                                    { id: 'ACTIVE_REBALANCE', t: 'Dynamic Yield Optimization', d: 'Continuous market scanning via LiFi/Uniswap SDKs.' },
+                                    { id: 'HIGH_FREQ_SCAN', t: 'Observation Only', d: 'Agent discovery without execution authorization.' }
+                                ].map(s => (
+                                    <div
+                                        key={s.id}
+                                        onClick={() => setStrategy(s.id)}
+                                        className={`p-5 rounded-[24px] border cursor-pointer transition-all duration-300 ${strategy === s.id ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_20px_rgba(59,130,246,0.05)]' : 'border-white/5 hover:border-white/10 opacity-60'}`}
+                                    >
+                                        <div className="flex justify-between items-center mb-1">
+                                            <span className={`text-xs font-black uppercase tracking-wide ${strategy === s.id ? 'text-white' : 'text-slate-400'}`}>{s.t}</span>
+                                            {strategy === s.id && <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />}
+                                        </div>
+                                        <p className="text-[10px] text-slate-500 leading-relaxed font-medium">{s.d}</p>
                                     </div>
-                                    <p className="text-sm text-slate-400 leading-snug">{s.desc}</p>
-                                    <div className="flex items-center space-x-2 pt-1">
-                                        <div className={`w-2 h-2 rounded-full ${s.risk === 'Zero' ? 'bg-green-500' : s.risk.includes('Low') ? 'bg-blue-500' : 'bg-orange-500'}`}></div>
-                                        <span className="text-xs text-slate-500">Risk: <span className="text-slate-300">{s.risk}</span></span>
-                                    </div>
+                                ))}
+                            </div>
+                        </div>
 
-                                    {/* Selection Ring */}
-                                    {strategy === s.id && (
-                                        <div className="absolute top-3 right-3 w-4 h-4 rounded-full border border-yellow-400 bg-yellow-400 flex items-center justify-center">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-black"></div>
+                        {/* 3. On-Chain Deposit Leg */}
+                        <div className="pt-4 space-y-6">
+                            <div className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600 ml-1">Vault Authorization Leg</div>
+
+                            {needsApproval ? (
+                                <div className="space-y-4">
+                                    <button
+                                        onClick={handleApprove}
+                                        disabled={loading}
+                                        className="group relative w-full h-18 rounded-[24px] bg-blue-600 hover:bg-blue-500 transition-all flex flex-col items-center justify-center font-black uppercase tracking-[0.2em] disabled:opacity-50 overflow-hidden"
+                                    >
+                                        {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : (
+                                            <>
+                                                <span className="text-sm">Approve USDC Transfer</span>
+                                                <span className="text-[9px] opacity-60 font-mono mt-1">Target: {escrowAddress?.slice(0, 10)}...</span>
+                                            </>
+                                        )}
+                                    </button>
+                                    {approvalTx && (
+                                        <div className="text-center font-mono p-3 bg-white/5 rounded-xl border border-white/5">
+                                            <div className="text-[8px] text-slate-600 uppercase mb-1">Approval Broadast Successful</div>
+                                            <a href={`https://sepolia.basescan.org/tx/${approvalTx}`} target="_blank" className="text-[9px] text-blue-400/80 hover:text-blue-400 truncate block">{approvalTx}</a>
                                         </div>
                                     )}
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <p className="text-slate-400">
-                        {needsApproval ? 'Approve USDC to enable session creation.' : 'Lock funds to start the session.'}
-                    </p>
-
-                    {needsApproval ? (
-                        <div className="w-full flex flex-col items-center space-y-3">
-                            <button
-                                onClick={handleApprove}
-                                disabled={loading}
-                                className="w-full p-6 border-2 border-yellow-400 bg-yellow-400/10 rounded-xl hover:bg-yellow-400/20 transition flex flex-col items-center group cursor-pointer disabled:opacity-50"
-                            >
-                                <span className="text-2xl font-bold text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.4)]">Approve USDC</span>
-                                <span className="text-xs text-slate-400 mt-2 font-mono">Setup allowance for Yellow Escrow</span>
-                            </button>
-                            {approvalTx && (
-                                <a
-                                    href={`https://sepolia.basescan.org/tx/${approvalTx}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="text-[10px] text-yellow-500/60 hover:text-yellow-400 font-mono transition-colors"
-                                >
-                                    Approval TX: {approvalTx.substring(0, 10)}...{approvalTx.substring(54)}
-                                </a>
+                            ) : (
+                                <div className="grid grid-cols-2 gap-4">
+                                    {[10, 25].map(amt => (
+                                        <button
+                                            key={amt}
+                                            onClick={() => handleVaultConfig(amt)}
+                                            disabled={loading}
+                                            className="h-24 rounded-[32px] border border-white/5 hover:border-blue-500/30 hover:bg-blue-500/[0.02] transition-all flex flex-col items-center justify-center space-y-1 group disabled:opacity-50"
+                                        >
+                                            <span className="text-2xl font-black text-white">{amt} USDC</span>
+                                            <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest group-hover:text-blue-400 transition">Confim Lock Tx</span>
+                                        </button>
+                                    ))}
+                                </div>
                             )}
                         </div>
-                    ) : (
-                        <div className="grid grid-cols-2 gap-4 w-full">
-                            <button
-                                onClick={() => handleDeposit(10)}
-                                disabled={loading}
-                                className="p-6 border-2 border-slate-700 bg-slate-800 rounded-xl hover:border-yellow-400 transition flex flex-col items-center group cursor-pointer disabled:opacity-50"
-                            >
-                                <span className="text-2xl font-bold text-white group-hover:text-yellow-400">10 USDC</span>
-                                <span className="text-xs text-slate-500 mt-2">Starter</span>
-                            </button>
+                    </>
+                )}
+            </div>
 
-                            <button
-                                onClick={() => handleDeposit(25)}
-                                disabled={loading}
-                                className="p-6 border-2 border-slate-700 bg-slate-800 rounded-xl hover:border-yellow-400 transition flex flex-col items-center group cursor-pointer disabled:opacity-50"
-                            >
-                                <span className="text-2xl font-bold text-white group-hover:text-yellow-400">25 USDC</span>
-                                <span className="text-xs text-slate-500 mt-2">Pro</span>
-                            </button>
-                        </div>
-                    )}
+            {error && <div className="w-full bg-red-500/10 border border-red-500/20 p-5 rounded-3xl text-red-500 text-[11px] font-mono text-center animate-fade-in">{error}</div>}
 
-                    {loading && (
-                        <div className="flex flex-col items-center space-y-2">
-                            <div className="w-4 h-4 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
-                            <div className="text-yellow-400 text-xs animate-pulse">
-                                {needsApproval ? "Confirming Approval On-chain..." : "Creating Session & Starting Agent..."}
-                            </div>
-                        </div>
-                    )}
-                    {error && <div className="text-red-400 text-sm mt-2 p-3 bg-red-400/10 border border-red-400/20 rounded-lg w-full text-center">{error}</div>}
+            <div className="flex items-center space-x-6 opacity-40 grayscale">
+                <div className="flex items-center space-x-2">
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">Atomic Security</span>
                 </div>
-            )}
+                <div className="w-1 h-1 rounded-full bg-slate-800" />
+                <div className="flex items-center space-x-2">
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">Zero Leakage Vault</span>
+                </div>
+            </div>
         </div>
     );
 };

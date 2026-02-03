@@ -43,12 +43,11 @@ function App() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-black text-white flex flex-col items-center justify-center p-4 font-sans">
+    <div className="w-full min-h-screen flex flex-col items-center justify-center p-6 md:p-12">
+      {/* Dynamic Background */}
+      <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-900/10 via-black to-black opacity-40"></div>
 
-      {/* Background Ambience */}
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black pointer-events-none z-0"></div>
-
-      <div className="relative z-10 w-full max-w-4xl flex flex-col items-center">
+      <div className="relative z-10 w-full flex flex-col items-center">
         {screen === 'landing' && (
           <Landing
             onStart={() => setScreen('deposit')}
@@ -66,6 +65,7 @@ function App() {
         {screen === 'active' && sessionData && (
           <ActiveSession
             sessionId={sessionData.sessionId}
+            creationTxHash={sessionData.txHash}
             onEndSession={(data) => {
               setSettleData(data);
               setScreen('settled');
@@ -83,6 +83,18 @@ function App() {
             }}
           />
         )}
+      </div>
+
+      {/* Persistence Hook / Footer Context */}
+      <div className="fixed bottom-10 left-0 right-0 z-20 flex justify-center pointer-events-none">
+        <div className="flex items-center space-x-6 px-6 py-3 bg-white/5 backdrop-blur-md rounded-full border border-white/5 opacity-40">
+          <div className="flex items-center space-x-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></span>
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white">Base Sepolia</span>
+          </div>
+          <div className="w-[1px] h-3 bg-white/10" />
+          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white">Verifiable Escrow V1.0</span>
+        </div>
       </div>
 
     </div>

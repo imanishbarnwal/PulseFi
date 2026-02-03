@@ -10,8 +10,8 @@ export const getEscrowAddress = (req: Request, res: Response) => {
             return res.status(500).json({ error: "ESCROW_PRIVATE_KEY missing" });
         }
 
-        const wallet = new Wallet(pk);
-        return res.json({ address: wallet.address });
+        const contractAddress = process.env.SESSION_ESCROW_ADDRESS || '0x66B72352B6C3F71320F24683f3ee91e84C23667c';
+        return res.json({ address: contractAddress });
     } catch (err: any) {
         console.error('[EscrowController] Error deriving address:', err.message);
         return res.status(500).json({ error: err.message });

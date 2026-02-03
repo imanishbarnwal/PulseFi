@@ -6,14 +6,16 @@ const API_URL = 'http://localhost:3000';
 
 export interface StartSessionResponse {
     sessionId: string;
-    sessionKey: string;
+    sessionKey: string; // Internal key (encrypted/secure in real apps)
     startTimestamp: number;
+    txHash?: string; // On-chain Session Creation Tx
 }
 
 export interface EndSessionResponse {
     settlementTxHash: string;
     finalBalance: number;
     actionsExecuted: number;
+    executionTxs?: string[]; // spend, swap, etc.
 }
 
 export interface AgentStatus {

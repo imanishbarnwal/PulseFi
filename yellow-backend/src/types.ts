@@ -42,6 +42,12 @@ export interface SessionState {
     actionHistory: ActionLog[];
     decisions: AgentDecision[];
     strategy?: AgentStrategy;
+    bestRoute?: {
+        tool: string;
+        route: any;
+        estimatedGas: string;
+        amountOut: string;
+    };
     status: 'ACTIVE' | 'SETTLED';
     settlementTxHash?: string;
 }
@@ -50,6 +56,7 @@ export interface StartSessionResponse {
     sessionId: string;
     // sessionKey removed - secure backend only
     startTimestamp: number;
+    txHash?: string;
 }
 
 export interface EndSessionResponse {

@@ -162,16 +162,14 @@ export async function executeTrade(
         return null;
     }
 
-    // 2. Execution (Real for Uniswap, Mock for LiFi in this demo)
-    let txHash = "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
-
+    // 2. Execution (Real for Uniswap, Fallback for Others)
     if (decision.tool === 'Uniswap') {
         const ROUTER_ADDRESS = '0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4';
         const USDC_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
         const WETH_ADDRESS = '0x4200000000000000000000000000000000000006';
 
         const ROUTER_ABI = [
-            'function exactInputSingle((address tokenIn, address tokenOut, uint24 stepFee, address recipient, uint256 amountIn, uint256 amountOutMinimum, uint160 sqrtPriceLimitX96)) external returns (uint256 amountOut)'
+            'function exactInputSingle((address tokenIn, address tokenOut, uint24 fee, address recipient, uint256 amountIn, uint256 amountOutMinimum, uint160 sqrtPriceLimitX96)) external returns (uint256 amountOut)'
         ];
 
         try {
@@ -180,71 +178,54 @@ export async function executeTrade(
 
             const amountIn = ethers.parseUnits("1.0", 6); // 1.0 USDC
 
-            // 1. Check/Send Approval
+            // 1. Approval Check
             const allowance = await usdc.allowance(await signer.getAddress(), ROUTER_ADDRESS);
             if (allowance < amountIn) {
-                console.log(`[Uniswap V3] Approving Router...`);
+                console.log(`[Uniswap V3] Real Approval: Router @ ${ROUTER_ADDRESS}`);
                 const appTx = await usdc.approve(ROUTER_ADDRESS, ethers.MaxUint256);
                 await appTx.wait();
             }
 
-            // 2. Estimate amountOut via staticCall
-            console.log(`[Uniswap V3] Estimating swap...`);
+            // 2. Swap Execution
             const params = {
                 tokenIn: USDC_ADDRESS,
                 tokenOut: WETH_ADDRESS,
                 fee: 3000,
-                recipient: await signer.getAddress(),
+                recipient: session.userAddress, // Real user receives the WETH
                 amountIn: amountIn,
-                amountOutMinimum: 0,
+                amountOutMinimum: 0, // In production, use quoter for slippage; for hackathon 0 is used for simple success
                 sqrtPriceLimitX96: 0
             };
 
-            let expectedOut = "0";
-            try {
-                const out = await router.exactInputSingle.staticCall(params);
-                expectedOut = ethers.formatEther(out);
-            } catch (e) {
-                console.warn("[Uniswap V3] staticCall failed, proceeding with 0 minOut");
-            }
-
-            console.log(`[Uniswap V3] Sending: 1.0 USDC -> ~${expectedOut} WETH...`);
-
-            // 3. Broadcast Transaction
+            console.log(`[Uniswap V3] Real Swap: 1.0 USDC -> WETH for ${session.userAddress}`);
             const tx = await router.exactInputSingle(params);
-            console.log(`[Uniswap V3] Transaction Sent: ${tx.hash}`);
-            console.log(`[Uniswap V3] Stats :: Hash: ${tx.hash} | In: 1.0 USDC | Out: ~${expectedOut} WETH`);
+            console.log(`[Uniswap V3] Real Tx Sent: ${tx.hash}`);
+            await tx.wait(); // Wait for actual confirmation
 
-            txHash = tx.hash;
+            const txHash = tx.hash;
+
+            // 3. Log Outcome & Update State
+            const actionLog: ActionLog = {
+                id: `exec_${Date.now()}`,
+                type: 'REBALANCE',
+                description: `Settled via Uniswap V3. Tx: ${txHash.substring(0, 10)}...`,
+                cost: gasCost,
+                timestamp: Date.now()
+            };
+
+            SessionStore.update(session.sessionId, {
+                actionsExecuted: storedSession.actionsExecuted + 1,
+                remainingBalance: storedSession.remainingBalance - 1, // Deduct swapped amount
+                actionHistory: [...(storedSession.actionHistory || []), actionLog]
+            });
+
+            return { status: 'SUCCESS', txHash: txHash, gasUsed: gasCost };
+
         } catch (error: any) {
-            console.error(`[Uniswap V3] Real swap failed: ${error.message}.`);
+            console.error(`[Uniswap V3] Real Execution FAILED: ${error.message}`);
+            throw error;
         }
     }
 
-    console.log(`[Execution] Trade Success/Sent: ${txHash} via ${decision.tool}`);
-
-    // 3. Update Session State
-    const newBalance = storedSession.remainingBalance - gasCost;
-
-    const actionLog: ActionLog = {
-        id: `exec_${Date.now()}`,
-        type: 'REBALANCE',
-        description: `Executed ${decision.tool} V3 Swap (1.0 USDC). Out: ~${decision.route?.amountOut || '0.0004'} WETH. Tx: ${txHash.substring(0, 10)}...`,
-        cost: gasCost,
-        timestamp: Date.now()
-    };
-
-    SessionStore.update(session.sessionId, {
-        actionsExecuted: storedSession.actionsExecuted + 1,
-        remainingBalance: newBalance,
-        actionHistory: [...(storedSession.actionHistory || []), actionLog]
-    });
-
-    console.log(`[Execution] Session Updated. Total Actions: ${storedSession.actionsExecuted + 1}`);
-
-    return {
-        status: 'SUCCESS',
-        txHash: txHash,
-        gasUsed: gasCost
-    };
+    return { status: 'FAILED', txHash: '', error: 'Tool not supported' };
 }

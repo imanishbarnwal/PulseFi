@@ -64,7 +64,7 @@ export class SessionController {
             }
 
             // Call Yellow SDK to start session
-            const { sessionId, sessionKey } = await this.yellowService.startSession(walletAddress, amount);
+            const { sessionId, sessionKey, txHash } = await this.yellowService.startSession(walletAddress, amount);
 
             const newSession: SessionState = {
                 sessionId,
@@ -87,7 +87,8 @@ export class SessionController {
                 sessionId,
                 // sessionKey: NEVER RETURN TO CLIENT
                 startTimestamp: newSession.startTime,
-                message: 'Session started successfully. Funds locked.'
+                txHash,
+                message: 'Session started successfully. Funds locked on-chain.'
             });
         } catch (error: any) {
             console.error('Error starting session:', error);

@@ -230,55 +230,27 @@ export class AgentService {
             const EXECUTION_THRESHOLD = 0.1; // 0.1% better
             const hasExistingTrade = (storedSession.actionHistory || []).some(a => a.type === 'REBALANCE');
 
-            if (percentBetter > EXECUTION_THRESHOLD && !hasExistingTrade) {
-                // TRADE_OPPORTUNITY_FOUND
-                decisionType = 'EXECUTION';
-                description = `Arb Found: ${reason}`;
-
-                reasoning = [
-                    `Market Scan: USDC -> WETH`,
-                    `Venue Selection: ${winner}`,
-                    `Advantage: ${reason}`,
-                    `Msg: TRADE_OPPORTUNITY_FOUND`,
-                    ...(agent.isDemo ? ["[DEMO MODE] Forcing profitable route"] : [])
-                ];
-                confidence = 0.95;
-                impact = `${agent.isDemo ? '[DEMO] ' : ''}Target: ${winner}. Advantage: ${percentBetter.toFixed(4)}%`;
-
-                // EXECUTE TRADE
-                const network = new ethers.Network('base-sepolia', 84532);
-                const provider = new ethers.JsonRpcProvider('https://sepolia.base.org', network);
-                const signer = this.yellowService.getSigner(provider);
-
-                await executeTrade(session, {
-                    tool: winner,
-                    route: {
-                        ...(winner === 'LiFi' ? lifiRoute : { id: 'uni-v3-sim' }),
+            // Store the current best route for potential settlement execution
+            if (winner && (liFiOut > 0 || uniOut > 0)) {
+                SessionStore.update(session.sessionId, {
+                    bestRoute: {
+                        tool: winner,
+                        route: winner === 'LiFi' ? lifiRoute : uniSim,
+                        estimatedGas: (winner === 'LiFi' ? lifiGas : uniGas).toString(),
                         amountOut: winner === 'LiFi'
-                            ? (parseFloat(lifiRoute.minAmountOut) / 1e18).toFixed(6)
-                            : (parseFloat(uniSim.estimatedAmountOut) / 1e18).toFixed(6)
-                    },
-                    estimatedGas: (winner === 'LiFi' ? lifiGas : uniGas).toString()
-                }, signer);
-            } else {
-                // NO_PROFITABLE_ROUTE
-                decisionType = 'ROUTE_CHECK';
-                description = "Market Stable - Monitoring";
-
-                reasoning = [
-                    `Market Check: Improvement ${percentBetter.toFixed(3)}% < Threshold`,
-                    `No profitable route found > gas cost`,
-                    `Msg: NO_PROFITABLE_ROUTE`
-                ];
-                confidence = 0.98;
-                impact = "Gas Saved: $0.00 (No Tx)";
+                            ? (parseFloat(lifiRoute.minAmountOut) / 1e18).toString()
+                            : (parseFloat(uniSim.estimatedAmountOut) / 1e18).toString()
+                    }
+                });
             }
 
-            console.log(`[Agent] Decision Made: ${description}`);
+            console.log(`[Agent] Monitoring... Advantage: ${percentBetter.toFixed(3)}% via ${winner}`);
         }
 
-        // 2. Update Session State (Off-Chain Decision Log)
-        const currentBalance = storedSession.remainingBalance - cost;
+
+        // 2. Update Session State (Sync with On-Chain)
+        const onChainBalance = await this.yellowService.getEscrowBalance(session.sessionId);
+
         const newActionLog: ActionLog = {
             id: `act_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
             type: actionName.toUpperCase().includes('SCAN') ? 'MARKET_SCAN' : 'REBALANCE',
@@ -288,7 +260,8 @@ export class AgentService {
         };
 
         SessionStore.update(session.sessionId, {
-            remainingBalance: currentBalance,
+            remainingBalance: onChainBalance,
+            escrowBalance: onChainBalance,
             actionsExecuted: storedSession.actionsExecuted + 1,
             actionHistory: [...(storedSession.actionHistory || []), newActionLog]
         });
@@ -316,7 +289,7 @@ export class AgentService {
         agent.tradeCount++;
         agent.totalLoss += cost;
 
-        const log = `[Action] ${description}. Cost: ${cost} USDC. New Balance: ${currentBalance.toFixed(2)}`;
+        const log = `[Action] ${description}. Cost: ${cost} USDC. New Balance: ${onChainBalance.toFixed(2)}`;
         agent.logs.push(log);
         console.log(`[Agent] ${log}`);
     }
@@ -359,6 +332,14 @@ export class AgentService {
             priceImpact: '0.01'
         };
 
+        // 1. Perform On-Chain Spend from Escrow
+        const spendTxHash = await this.yellowService.spendFromEscrow(
+            sessionId,
+            '0x036CbD53842c5426634e7929541eC2318f3dCF7e', // Uniswap Router
+            1.00
+        );
+
+        // 2. Execute the actual swap logic
         const result = await executeTrade(session, {
             tool: winner,
             route: routeData,
@@ -366,6 +347,12 @@ export class AgentService {
         }, signer);
 
         if (result?.status === 'SUCCESS') {
+            const onChainBalance = await this.yellowService.getEscrowBalance(sessionId);
+            SessionStore.update(sessionId, {
+                remainingBalance: onChainBalance,
+                escrowBalance: onChainBalance
+            });
+
             // Log structured decision so it shows up in UI
             SessionStore.addDecision(sessionId, {
                 timestamp: Date.now(),
@@ -379,7 +366,7 @@ export class AgentService {
                 }
             });
 
-            agent.logs.push(`[Manual] Forced Demo Trade Executed via Uniswap. Tx: ${result.txHash.slice(0, 10)}...`);
+            agent.logs.push(`[Manual] Forced Demo Trade Executed via Uniswap. Tx: ${spendTxHash.slice(0, 10)}...`);
             agent.tradeCount++;
         }
 
