@@ -67,9 +67,9 @@ export const ActiveSession: React.FC<Props> = ({ sessionId, creationTxHash, onEn
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-white/5 pb-8">
                 <div className="space-y-2">
                     <div className="flex items-center space-x-3">
-                        <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Session Protocol V1: Base Sepolia</h2>
+                        <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Session Context: Base Sepolia</h2>
                         <div className="bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] font-bold text-blue-400 uppercase tracking-widest">
-                            Authorized Executor Mode
+                            Hook Gated Model
                         </div>
                     </div>
                     <div className="flex flex-wrap gap-4 text-[10px] font-mono text-slate-500">
@@ -77,9 +77,13 @@ export const ActiveSession: React.FC<Props> = ({ sessionId, creationTxHash, onEn
                             <span className="text-slate-600 uppercase">Escrow:</span>
                             <a href={`https://sepolia.basescan.org/address/${escrowAddress}`} target="_blank" className="text-blue-500 hover:underline">{escrowAddress}</a>
                         </span>
+                        <span className="bg-white/5 px-2 py-1 rounded border border-white/5 flex items-center gap-2">
+                            <span className="text-slate-600 uppercase">v4 Hook:</span>
+                            <a href={`https://sepolia.basescan.org/address/0x66B72352B6C3F71320F24683f3ee91e84C23667c`} target="_blank" className="text-blue-500 hover:underline">0x66B7...667c</a>
+                        </span>
                         {creationTxHash && (
                             <span className="bg-emerald-500/5 px-2 py-1 rounded border border-emerald-500/10 flex items-center gap-2">
-                                <span className="text-emerald-500/60 uppercase">Init Tx:</span>
+                                <span className="text-emerald-500/60 uppercase">Lock Tx:</span>
                                 <a href={`https://sepolia.basescan.org/tx/${creationTxHash}`} target="_blank" className="text-emerald-400 hover:underline">{creationTxHash.slice(0, 16)}...</a>
                             </span>
                         )}
@@ -103,12 +107,12 @@ export const ActiveSession: React.FC<Props> = ({ sessionId, creationTxHash, onEn
                     <div className="fintech-card flex-1 flex flex-col !p-0 !bg-white/[0.03] !rounded-[48px] overflow-hidden">
                         <div className="p-10 border-b border-white/5 flex justify-between items-center">
                             <div>
-                                <h3 className="text-xs font-black uppercase tracking-[0.4em] text-slate-500">Off-Chain Solver Performance</h3>
-                                <p className="text-[10px] text-slate-600 font-medium mt-1">Simulated heuristics for optimized DEX routing</p>
+                                <h3 className="text-xs font-black uppercase tracking-[0.4em] text-slate-500">Off-Chain Solver Loop</h3>
+                                <p className="text-[10px] text-slate-600 font-medium mt-1">Evaluating routing heuristics (Simulated)</p>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                                <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Scanning Markets</span>
+                                <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Logic Observation</span>
                             </div>
                         </div>
 
@@ -117,12 +121,12 @@ export const ActiveSession: React.FC<Props> = ({ sessionId, creationTxHash, onEn
                                 <div className="space-y-12 animate-fade-in">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                                         <div className="space-y-6">
-                                            <div className="text-[10px] font-black text-slate-700 uppercase tracking-[0.3em]">Decision Engine Reasoning</div>
+                                            <div className="text-[10px] font-black text-slate-700 uppercase tracking-[0.3em]">Decision Reasoning Context</div>
                                             <div className="text-xl font-bold text-slate-300 leading-snug">
                                                 {latestDecision.reasoning[0]}
                                             </div>
                                             <div className="text-[11px] text-slate-500 leading-relaxed font-light font-mono px-4 border-l border-white/10 italic">
-                                                Optimization Objective: Minimize slippage via concentrated liquidity paths on Uniswap V3.
+                                                Observation: Targeting concentrated liquidity pools. v4 Hook will enforce maxAmountIn limits.
                                             </div>
                                         </div>
 
@@ -160,8 +164,8 @@ export const ActiveSession: React.FC<Props> = ({ sessionId, creationTxHash, onEn
                                     {/* Tracer Logs */}
                                     <div className="pt-10 border-t border-white/10 space-y-4">
                                         <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.3em] text-slate-600">
-                                            <span>Solver Trace Log</span>
-                                            <span>Cryptographic Verification: PASSED</span>
+                                            <span>Off-Chain Solver Logs</span>
+                                            <span>Observation Status: ACTIVE</span>
                                         </div>
                                         <div className="space-y-2 max-h-[120px] overflow-y-auto custom-scrollbar font-mono text-[10px]">
                                             {decisions.slice(-6).reverse().map((d, i) => (
@@ -189,10 +193,10 @@ export const ActiveSession: React.FC<Props> = ({ sessionId, creationTxHash, onEn
                     <div className="fintech-card flex-1 flex flex-col items-center text-center justify-between !py-12 !bg-white/[0.04] !rounded-[48px] border-white/10 relative overflow-hidden group">
                         <div className="relative z-10 w-full px-8 space-y-12">
                             <div className="space-y-4">
-                                <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter">Protocol Finality</h4>
+                                <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter">Atomic Execution Leg</h4>
                                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed">
-                                    Authorization: **Executor Wallet**. <br />
-                                    Action: Atomic Multicall (Spend + Swap + Settle).
+                                    Trigger: <b className="text-slate-400">PoolManager.swap()</b> <br />
+                                    Security: <b className="text-slate-400">SessionGuardHook.beforeSwap()</b>
                                 </p>
                             </div>
 
@@ -208,19 +212,19 @@ export const ActiveSession: React.FC<Props> = ({ sessionId, creationTxHash, onEn
                                     </div>
                                 ) : (
                                     <div className="flex flex-col items-center space-y-1">
-                                        <span className="text-slate-900 font-black uppercase text-xl tracking-widest">Settle & Exit</span>
+                                        <span className="text-slate-900 font-black uppercase text-xl tracking-widest">Execute Swap</span>
                                         <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-1 group-hover:text-blue-500 transition-colors">
-                                            Broadcast to Base L2 <span className="animate-bounce-x">→</span>
+                                            Authorize v4 Hook Broadcast <span className="animate-bounce-x">→</span>
                                         </span>
                                     </div>
                                 )}
                             </button>
 
                             <div className="space-y-2">
-                                <div className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-700">Verification Mechanism</div>
+                                <div className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-700">Governance Mechanism</div>
                                 <div className="flex justify-center gap-2">
                                     <span className="px-2 py-0.5 rounded-full border border-white/5 bg-white/5 text-[8px] font-bold text-slate-500 uppercase">Non-Custodial</span>
-                                    <span className="px-2 py-0.5 rounded-full border border-white/5 bg-white/5 text-[8px] font-bold text-slate-500 uppercase">Verifiable Solver</span>
+                                    <span className="px-2 py-0.5 rounded-full border border-white/5 bg-white/5 text-[8px] font-bold text-slate-500 uppercase">Permissioned Solver</span>
                                 </div>
                             </div>
                         </div>
@@ -237,7 +241,7 @@ export const ActiveSession: React.FC<Props> = ({ sessionId, creationTxHash, onEn
                             <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">Judge Audit Context</h5>
                         </div>
                         <p className="text-[11px] text-slate-600 leading-relaxed font-light">
-                            PulseFi solves for <b className="text-slate-400">Information Asymmetry</b>. The heavy compute (market routing) happens off-chain in the Solver Loop, but the **Capital Governance** is hardcoded in the <b className="text-slate-400">SessionEscrow.sol</b> contract on Base Sepolia. The result is instant execution with 100% security.
+                            PulseFi addresses <b className="text-slate-400">Yield Optimization</b> via off-chain compute. While routing heuristics are evaluated in the Solver Loop, <b className="text-slate-400">Capital Enforcement</b> is strictly managed by the <b className="text-slate-400">SessionEscrow.sol</b> contract on Base Sepolia.
                         </p>
                     </div>
                 </div>

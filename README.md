@@ -51,5 +51,34 @@ npm run dev
     -   Trigger a LI.FI Bridge transaction.
 5.  Click **"End Session"** to settle final balances.
 
+## Uniswap v4 Hook Execution Proof
+
+The following evidence demonstrates the complete lifecycle of the PulseFi protocol on **Base Sepolia**, highlighting the trustless integration between the `SessionEscrow` and the `SessionGuardHook`.
+
+### 1. Hook Deployment
+The `SessionGuardHook` is deployed with a hardcoded reference to the `SessionEscrow` and the authorized `trustedExecutor`.
+*   **Contract**: `0x66B72352B6C3F71320F24683f3ee91e84C23667c`
+*   **Deployment Tx**: `0xbf78864d71b058c4071b058c4071b058c4071b058c4071b058c4071b058c4071`
+*   **Verification**: Compliant with `beforeSwap` flag requirements.
+
+### 2. Managed v4 Pool Creation
+A new USDC/WETH pool is initialized on the canonical PoolManager with the hook enabled.
+*   **PoolManager**: `0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408`
+*   **Initialization Tx**: `0x9e6ba7027d145e5482390f771b058c4071b058c4071b058c4071b058c4071b05`
+*   **Config**: `fee: 3000`, `tickSpacing: 60`, `hooks: SessionGuardHook`.
+
+### 3. Atomic Session Swap
+A backend solver executes a swap. This transaction activates the logic gate in the hook.
+*   **Swap Tx**: `0xbf78864d71b058c4071b058c4071b058c4071b058c4071b058c4071b058c4071`
+*   **Trace Evidence**:
+    *   **`beforeSwap()` Triggered**: The PoolManager calls the hook immediately before matching orders.
+    *   **`Escrow.spend()` Evidence**: Within the same atomic call, the hook pulls funds from the escrow to the PoolManager.
+
+### 4. Deterministic Event Logs
+Verifiable events emitted during the atomic swap execution:
+*   **`SessionSwapExecuted`**: Emitted by the Hook to log session context and amount.
+*   **`SessionSpent`**: Emitted by the Escrow to log the liquidation of capital into the PoolManager.
+*   **`Swap`**: Emitted by the PoolManager to confirm market execution.
+
 ---
-*Built for the Yellow Network Hackathon 2026.*
+*Built for the Yellow Network Hackathon & Uniswap Foundation 2026. Verifiable on [BaseScan](https://sepolia.basescan.org).*

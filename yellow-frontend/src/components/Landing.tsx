@@ -21,15 +21,15 @@ export const Landing: React.FC<Props> = ({ onStart, onDemo }) => {
                     PulseFi
                 </h1>
                 <p className="text-xl text-slate-400 font-medium max-w-lg mx-auto leading-relaxed">
-                    Session-key escrow for autonomous capital deployment. Higher integrity, zero-leakage yield discovery.
+                    Scoped Session Governance for Agentic Liquidity. Immutable enforcement via Uniswap v4 Hooks.
                 </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full px-4 text-left">
                 {[
-                    { t: 'Session Escrow', d: 'Immutable on-chain vault for secure locking.', i: '🛡️' },
-                    { t: 'Solver Loops', d: 'Infinite off-chain route evaluation.', i: '🧠' },
-                    { t: 'Atomic Settle', d: 'Single-signature multicall release.', i: '⚡' }
+                    { t: 'Session Escrow', d: 'Immutable capital lock on Base Sepolia.', i: '🛡️' },
+                    { t: 'v4 Hook Gate', d: 'Atomic beforeSwap authorization.', i: '⛓️' },
+                    { t: 'Solver Trace', d: 'Deterministic off-chain path discovery.', i: '🧠' }
                 ].map((f, i) => (
                     <div key={i} className="bg-white/5 border border-white/5 rounded-3xl p-6 space-y-2">
                         <div className="text-2xl">{f.i}</div>
@@ -44,14 +44,14 @@ export const Landing: React.FC<Props> = ({ onStart, onDemo }) => {
                     onClick={onStart}
                     className="group relative h-18 w-full rounded-[24px] bg-white hover:bg-slate-100 transition-all flex items-center justify-center overflow-hidden active:scale-95 shadow-2xl"
                 >
-                    <span className="text-black font-black uppercase tracking-[0.2em] text-base">Initialize Instance</span>
+                    <span className="text-black font-black uppercase tracking-[0.2em] text-base">Provision Session</span>
                 </button>
 
                 <button
                     onClick={onDemo}
                     className="text-slate-600 hover:text-white transition-colors text-[10px] font-black uppercase tracking-[0.3em]"
                 >
-                    Launch Technical Simulation
+                    Review Safety Documentation
                 </button>
             </div>
 

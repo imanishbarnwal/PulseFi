@@ -229,3 +229,68 @@ export async function executeTrade(
 
     return { status: 'FAILED', txHash: '', error: 'Tool not supported' };
 }
+/**
+ * Executes an atomic Uniswap v4 swap utilizing the SessionGuardHook for funding.
+ */
+export async function executeV4SessionSwap(
+    sessionId: string,
+    amountUSD: number,
+    executorSigner: ethers.Signer,
+    hookAddress: string = '0x66B72352B6C3F71320F24683f3ee91e84C23667c'
+): Promise<{ txHash: string; status: string }> {
+    const USDC = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
+    const WETH = '0x4200000000000000000000000000000000000006';
+
+    const poolManager = new ethers.Contract(POOL_MANAGER_ADDRESS, [
+        'function swap((address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks), (bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96), bytes hookData) external returns (int256)'
+    ], executorSigner);
+
+    // 1. Encode hookData: (bytes32 sessionId, uint256 maxAmountIn)
+    const amountInUnits = ethers.parseUnits(amountUSD.toFixed(2), 6);
+    const hookData = ethers.AbiCoder.defaultAbiCoder().encode(
+        ['bytes32', 'uint256'],
+        [sessionId, amountInUnits]
+    );
+
+    // 2. Define Pool Key and Swap Params
+    const poolKey = {
+        currency0: USDC,
+        currency1: WETH,
+        fee: 3000,
+        tickSpacing: 60,
+        hooks: hookAddress
+    };
+
+    const swapParams = {
+        zeroForOne: true, // USDC -> WETH
+        amountSpecified: -amountInUnits, // exactInput (negative)
+        sqrtPriceLimitX96: 0
+    };
+
+    console.log(`[PulseFi] Broadcasting Atomic Session Swap: ${sessionId.slice(0, 10)}...`);
+
+    try {
+        const tx = await poolManager.swap(poolKey, swapParams, hookData);
+        console.log(`[PulseFi] Swap Transaction Sent: ${tx.hash}`);
+        await tx.wait(); // Wait for actual confirmation
+
+        return {
+            status: 'CONFIRMED',
+            txHash: tx.hash
+        };
+    } catch (error: any) {
+        console.error(`[PulseFi] Atomic Swap Failed: ${error.message}`);
+        throw new Error(`v4 Execution Failed: ${error.message}`);
+    }
+}
+
+/**
+ * Example Call:
+ * 
+ * const result = await executeV4SessionSwap(
+ *   '0x...', // sessionId
+ *   1.0,     // amountUSD
+ *   signer,  // Trusted Executor Signer
+ *   '0x...'  // SessionGuardHook Address
+ * );
+ */

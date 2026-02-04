@@ -125,38 +125,45 @@ export class YellowService {
         }
     }
 
-    /**
-     * Dedicated method for the ETHGlobal demo: 
-     * 1. Spend from Escrow to Backend
-     * 2. Execute Uniswap Swap
-     */
     async executeOnChainTrade(sessionId: string, amountUSD: number): Promise<{ spendTxHash: string, swapTxHash: string }> {
         const session = SessionStore.get(sessionId);
         if (!session) throw new Error("Session not found");
 
-        const escrowContract = new ethers.Contract(SESSION_ESCROW_ADDRESS, SESSION_ESCROW_ABI, this.wallet);
+        const POOL_MANAGER = '0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408'; // Base Sepolia PM
+        const GUARD_HOOK = '0x66B72352B6C3F71320F24683f3ee91e84C23667c'; // Placeholder for Hook
 
-        // 1. SPEND
-        console.log(`[YellowService] Step 1: spend(${sessionId}, backendWallet, ${amountUSD} USDC)`);
-        const spendTx = await escrowContract.spend(sessionId, this.wallet.address, ethers.parseUnits(amountUSD.toFixed(2), 6));
-        await spendTx.wait();
-        const spendTxHash = spendTx.hash;
+        // Encode hookData: (sessionId, maxAmount)
+        const maxAmountIn = ethers.parseUnits(amountUSD.toFixed(2), 6);
+        const hookData = ethers.AbiCoder.defaultAbiCoder().encode(
+            ['bytes32', 'uint256'],
+            [sessionId, maxAmountIn]
+        );
 
-        // 2. SWAP
-        console.log(`[YellowService] Step 2: Uniswap V3 exactInputSingle...`);
-        const result = await executeTrade(session, {
-            tool: 'Uniswap',
-            route: { out: '0.0004' }, // Placeholder for estimating
-            estimatedGas: '0.50'
-        }, this.wallet);
+        const poolManager = new ethers.Contract(POOL_MANAGER, [
+            'function swap((address,address,uint24,int24,address), (bool,int256,uint160), bytes) external returns (int256)'
+        ], this.wallet);
 
-        if (result?.status !== 'SUCCESS') {
-            throw new Error(`Swap failed: ${result?.txHash || 'Unknown'}`);
-        }
+        const poolKey = {
+            currency0: '0x036CbD53842c5426634e7929541eC2318f3dCF7e', // USDC
+            currency1: '0x4200000000000000000000000000000000000006', // WETH
+            fee: 3000,
+            tickSpacing: 60,
+            hooks: GUARD_HOOK
+        };
+
+        const swapParams = {
+            zeroForOne: true,
+            amountSpecified: -maxAmountIn, // exactInput
+            sqrtPriceLimitX96: 0
+        };
+
+        console.log(`[PulseFi] Atomic Uniswap v4 Swap: Session ${sessionId.slice(0, 8)}`);
+        const tx = await poolManager.swap(poolKey, swapParams, hookData);
+        await tx.wait();
 
         return {
-            spendTxHash,
-            swapTxHash: result.txHash
+            spendTxHash: tx.hash, // In v4 atomic model, one tx covers both
+            swapTxHash: tx.hash
         };
     }
 

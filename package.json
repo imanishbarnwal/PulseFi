@@ -1,0 +1,21 @@
+{
+  "name": "pulsefi",
+  "version": "1.0.0",
+  "description": "PulseFi is a Session-Based DeFi Agent system built for the Yellow Network Hackathon. It demonstrates how to use the Yellow Network SDK (Nitrolite) to create \"Smart Sessions\" where an automated AI agent can execute high-speed, off-chain logic with on-chain settlement.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imanishbarnwal/PulseFi.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/imanishbarnwal/PulseFi/issues"
+  },
+  "homepage": "https://github.com/imanishbarnwal/PulseFi#readme"
+}

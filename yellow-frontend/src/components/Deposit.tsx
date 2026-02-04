@@ -103,8 +103,8 @@ export const Deposit: React.FC<Props> = ({ onSessionStarted }) => {
     return (
         <div className="flex flex-col items-center space-y-8 animate-fade-in w-full max-w-xl">
             <div className="text-center space-y-2">
-                <h2 className="text-4xl font-black text-white tracking-tight uppercase italic">Vault Initialization</h2>
-                <p className="text-slate-500 text-[11px] font-bold uppercase tracking-[0.2em]">Deploying immutable session-key escrow</p>
+                <h2 className="text-4xl font-black text-white tracking-tight uppercase italic">Provision Session</h2>
+                <p className="text-slate-500 text-[11px] font-bold uppercase tracking-[0.2em]">Configuring Scoped v4 Hook Gating</p>
             </div>
 
             <div className="w-full fintech-card space-y-10 !p-10 !bg-white/[0.03]">
@@ -114,7 +114,7 @@ export const Deposit: React.FC<Props> = ({ onSessionStarted }) => {
                         onClick={connectWallet}
                         className="w-full py-5 bg-white text-black font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-slate-100 transition shadow-2xl active:scale-[0.98]"
                     >
-                        Initialize Wallet Path
+                        Authorize Ledger Access
                     </button>
                 ) : (
                     <div className="flex items-center justify-between px-5 py-4 bg-black/40 rounded-2xl border border-white/5 font-mono">
@@ -128,13 +128,12 @@ export const Deposit: React.FC<Props> = ({ onSessionStarted }) => {
 
                 {address && (
                     <>
-                        {/* 2. Solver Intelligence Configuration */}
                         <div className="space-y-4">
-                            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600 block ml-1">Off-Chain Intelligence Protocol</label>
+                            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600 block ml-1">Execution Authorization Scoping</label>
                             <div className="grid grid-cols-1 gap-3">
                                 {[
-                                    { id: 'ACTIVE_REBALANCE', t: 'Dynamic Yield Optimization', d: 'Continuous market scanning via LiFi/Uniswap SDKs.' },
-                                    { id: 'HIGH_FREQ_SCAN', t: 'Observation Only', d: 'Agent discovery without execution authorization.' }
+                                    { id: 'ACTIVE_REBALANCE', t: 'Atomic Swapping (v4 beforeSwap)', d: 'Authorized to trigger JIT liquidation via SessionGuardHook.' },
+                                    { id: 'HIGH_FREQ_SCAN', t: 'Read-Only Heuristics', d: 'Agent discovery without on-chain execution capability.' }
                                 ].map(s => (
                                     <div
                                         key={s.id}
@@ -164,8 +163,8 @@ export const Deposit: React.FC<Props> = ({ onSessionStarted }) => {
                                     >
                                         {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : (
                                             <>
-                                                <span className="text-sm">Approve USDC Transfer</span>
-                                                <span className="text-[9px] opacity-60 font-mono mt-1">Target: {escrowAddress?.slice(0, 10)}...</span>
+                                                <span className="text-sm">Approve Session Funding</span>
+                                                <span className="text-[9px] opacity-60 font-mono mt-1">Escrow: {escrowAddress?.slice(0, 10)}...</span>
                                             </>
                                         )}
                                     </button>
@@ -186,7 +185,7 @@ export const Deposit: React.FC<Props> = ({ onSessionStarted }) => {
                                             className="h-24 rounded-[32px] border border-white/5 hover:border-blue-500/30 hover:bg-blue-500/[0.02] transition-all flex flex-col items-center justify-center space-y-1 group disabled:opacity-50"
                                         >
                                             <span className="text-2xl font-black text-white">{amt} USDC</span>
-                                            <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest group-hover:text-blue-400 transition">Confim Lock Tx</span>
+                                            <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest group-hover:text-blue-400 transition">Broadcast Lock</span>
                                         </button>
                                     ))}
                                 </div>
