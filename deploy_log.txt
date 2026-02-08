@@ -1,0 +1,351 @@
+No files changed, compilation skipped
+Warning: Dry run enabled, not broadcasting transaction
+
+Contract: SessionEscrow
+Transaction: {
+  "from": "0x9fbb19112a2a7731e787058cc0e84c16e4cd7ab1",
+  "to": null,
+  "maxFeePerGas": "0x155cc0",
+  "maxPriorityFeePerGas": "0xf4240",
+  "gas": "0x8dc75",
+  "input": "0x60a03461010757601f61095338819003918201601f19168301916001600160401b0383118484101761010b57808492604094855283398101031261010757610052602061004b8361011f565b920161011f565b33156100f4575f8054336001600160a01b0319821681178355604051949290916001600160a01b0316907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e09080a3600180556001600160a01b03908116608052600280546001600160a01b0319169290911691909117905561081f908161013482396080518181816101ce0152818161037a0152818161057501526107100152f35b631e4fbdf760e01b5f525f60045260245ffd5b5f80fd5b634e487b7160e01b5f52604160045260245ffd5b51906001600160a01b03821682036101075756fe6080806040526004361015610012575f80fd5b5f905f3560e01c9081633e413bee146106fe57508063715018a6146106a757806374936c16146106415780637dbd2832146105fc5780638da5cb5b146105d5578063987757dd146104bf578063c34c08e514610497578063cec84f3c14610435578063d0cb51cc146102b2578063e9aae07e1461011f5763f2fde38b14610097575f80fd5b3461011c57602036600319011261011c576100b061073f565b6100b86107a3565b6001600160a01b031680156101085781546001600160a01b03198116821783556001600160a01b03167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e08380a380f35b631e4fbdf760e01b82526004829052602482fd5b80fd5b503461011c57606036600319011261011c576024356001600160a01b03811690600435908281036102ae57604435906101566107c9565b6002546001600160a01b031633036102a05782855260036020526040852080546001600160a01b031615610291576001018054908382106102825783820391821161026e575560405163a9059cbb60e01b81526001600160a01b039091166004820152602481018290529060208280604481010381887f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03165af1908115610263577f57ccdee20e8c980d86ce119d76f251ee753cba4cba2237f6e0bd9d38e145163292602092610238575b50604051908152a36001805580f35b61025790833d851161025c575b61024f8183610755565b81019061078b565b610229565b503d610245565b6040513d87823e3d90fd5b634e487b7160e01b87526011600452602487fd5b631e9acf1760e31b8752600487fd5b630652d51560e11b8652600486fd5b6282b42960e81b8552600485fd5b8380fd5b503461011c57604036600319011261011c576024356004356102d26107c9565b808352600360205260408320546001600160a01b0316610426578115610417576040516040810181811067ffffffffffffffff8211176104035760405233815260016020820184815283865260036020526040862092828060a01b039051166bffffffffffffffffffffffff60a01b845416178355519101556040516323b872dd60e01b81523360048201523060248201528260448201526020816064818760018060a01b037f0000000000000000000000000000000000000000000000000000000000000000165af180156103f8576103db575b506040519182527f12212fc639e7368fbfdeb5ffb8ab971f9fe1d8736a5aee1b07fea216ab77629360203393a36001805580f35b6103f39060203d60201161025c5761024f8183610755565b6103a7565b6040513d86823e3d90fd5b634e487b7160e01b85526041600452602485fd5b631e9acf1760e31b8352600483fd5b6323792a1160e11b8352600483fd5b503461049357602036600319011261049357303b156104935760405163987757dd60e01b815260048035908201525f8160248183305af180156104885761047a575080f35b61048691505f90610755565b005b6040513d5f823e3d90fd5b5f80fd5b34610493575f366003190112610493576002546040516001600160a01b039091168152602090f35b34610493576020366003190112610493576004356104db6107c9565b5f81815260036020526040902080546001600160a01b031633036105c7576001015490805f5260036020525f60016040822082815501558161054a575b6040519182527f72a0e5dfb512f8abf3c19f96b1c89a59ca47f3285c98d0667287f98824c8a7e560203393a360018055005b60405163a9059cbb60e01b8152336004820152602481018390526020816044815f6001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000165af18015610488576105a8575b50610518565b6105c09060203d60201161025c5761024f8183610755565b50826105a2565b6282b42960e81b5f5260045ffd5b34610493575f366003190112610493575f546040516001600160a01b039091168152602090f35b34610493576020366003190112610493576004355f90815260036020908152604091829020805460019091015483516001600160a01b03909216825291810191909152f35b346104935760203660031901126104935761065a61073f565b6106626107a3565b600280546001600160a01b0319166001600160a01b039290921691821790557fd9436ef9ce00ffeabc5da2489701502d3bd1a5ed7b254a1981fc5ffef9828e115f80a2005b34610493575f366003190112610493576106bf6107a3565b5f80546001600160a01b0319811682556001600160a01b03167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e08280a3005b34610493575f366003190112610493577f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03168152602090f35b600435906001600160a01b038216820361049357565b90601f8019910116810190811067ffffffffffffffff82111761077757604052565b634e487b7160e01b5f52604160045260245ffd5b90816020910312610493575180151581036104935790565b5f546001600160a01b031633036107b657565b63118cdaa760e01b5f523360045260245ffd5b6002600154146107da576002600155565b633ee5aeb560e01b5f5260045ffdfea264697066735822122041deaa65ff0724e9d9e33d1f9ad6f1c9f5f2f59fcc732c1f7034aa6b17a2348464736f6c634300081a0033000000000000000000000000036cbd53842c5426634e7929541ec2318f3dcf7e0000000000000000000000009fbb19112a2a7731e787058cc0e84c16e4cd7ab1",
+  "nonce": "0x2c",
+  "chainId": "0x14a34"
+}
+ABI: [
+  {
+    "type": "constructor",
+    "inputs": [
+      {
+        "name": "_usdc",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "_executor",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "createSession",
+    "inputs": [
+      {
+        "name": "sessionId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "executor",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "forceWithdraw",
+    "inputs": [
+      {
+        "name": "sessionId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "owner",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "renounceOwnership",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "sessions",
+    "inputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "owner",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "balance",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "settle",
+    "inputs": [
+      {
+        "name": "sessionId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "spend",
+    "inputs": [
+      {
+        "name": "sessionId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "recipient",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "transferOwnership",
+    "inputs": [
+      {
+        "name": "newOwner",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "updateExecutor",
+    "inputs": [
+      {
+        "name": "_newExecutor",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "usdc",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IERC20"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "event",
+    "name": "ExecutorUpdated",
+    "inputs": [
+      {
+        "name": "newExecutor",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "OwnershipTransferred",
+    "inputs": [
+      {
+        "name": "previousOwner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "newOwner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "SessionCreated",
+    "inputs": [
+      {
+        "name": "sessionId",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "owner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "SessionSettled",
+    "inputs": [
+      {
+        "name": "sessionId",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "owner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "remainingAmount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "SessionSpent",
+    "inputs": [
+      {
+        "name": "sessionId",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "recipient",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "InsufficientBalance",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "OwnableInvalidOwner",
+    "inputs": [
+      {
+        "name": "owner",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "OwnableUnauthorizedAccount",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ReentrancyGuardReentrantCall",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SessionAlreadyExists",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SessionDoesNotExist",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Unauthorized",
+    "inputs": []
+  }
+]
+
+Warning: To broadcast this transaction, add --broadcast to the previous command. See forge create --help for more.

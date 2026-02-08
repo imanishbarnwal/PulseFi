@@ -1,6 +1,6 @@
 import { ActionLog, AgentConfig, AgentState, SessionState } from '../types';
 import { SessionStore } from '../store/sessionStore';
-import { LifiService } from './lifi';
+import { checkLifiRoute } from './lifi';
 import { simulateSwap, executeTrade } from './uniswap';
 import { ethers } from 'ethers';
 
@@ -15,11 +15,9 @@ export class AgentService {
     private activeAgents: Map<string, AgentState> = new Map();
     private timers: Map<string, NodeJS.Timeout> = new Map();
 
-    private lifiService: LifiService;
     private yellowService: YellowService;
 
     constructor(yellowService: YellowService) {
-        this.lifiService = new LifiService();
         this.yellowService = yellowService;
     }
 
@@ -185,13 +183,8 @@ export class AgentService {
         if (actionName.includes('Rebalance') || actionName.includes('Scan')) {
             console.log(`[Agent] Comparing venues (LiFi vs Uniswap V3)...`);
 
-            // 1. Get LiFi Quote (Direct Route)
-            lifiRoute = await this.lifiService.getBestRoute({
-                fromToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC
-                toToken: '0x4200000000000000000000000000000000000006',   // WETH
-                amount: '10000000', // 10 USDC
-                chainId: 8453
-            });
+            // 1. Get LiFi Quote (Using new standalone service)
+            lifiRoute = await checkLifiRoute('10000000'); // 10 USDC
 
             // 2. Get Uniswap Simulation (Via Quoter)
             uniSim = await simulateSwap({
@@ -200,10 +193,11 @@ export class AgentService {
                 amountIn: '10000000'
             });
 
-            const liFiOut = lifiRoute ? parseFloat(lifiRoute.minAmountOut) : 0;
+            // Adjust values based on new LiFi return shape
+            const liFiOut = lifiRoute.route ? parseFloat(lifiRoute.netOutput) : 0;
             const uniOut = uniSim ? parseFloat(uniSim.estimatedAmountOut) : 0;
 
-            const lifiGas = lifiRoute ? parseFloat(lifiRoute.estimatedGas) : 0.65;
+            const lifiGas = lifiRoute.estimatedGas ? parseFloat(lifiRoute.estimatedGas) : 0.65;
             const uniGas = parseFloat(uniSim?.estimatedGas || "0.45");
 
             let winner = 'Uniswap';
@@ -235,10 +229,10 @@ export class AgentService {
                 SessionStore.update(session.sessionId, {
                     bestRoute: {
                         tool: winner,
-                        route: winner === 'LiFi' ? lifiRoute : uniSim,
+                        route: winner === 'LiFi' ? lifiRoute.route : uniSim,
                         estimatedGas: (winner === 'LiFi' ? lifiGas : uniGas).toString(),
                         amountOut: winner === 'LiFi'
-                            ? (parseFloat(lifiRoute.minAmountOut) / 1e18).toString()
+                            ? (parseFloat(lifiRoute.netOutput) / 1e18).toString()
                             : (parseFloat(uniSim.estimatedAmountOut) / 1e18).toString()
                     }
                 });
@@ -275,8 +269,8 @@ export class AgentService {
             impactEstimate: impact,
             data: {
                 lifi: {
-                    out: lifiRoute ? parseFloat(lifiRoute.minAmountOut).toFixed(6) : "0",
-                    gas: lifiRoute ? parseFloat(lifiRoute.estimatedGas).toFixed(2) : "0.65"
+                    out: lifiRoute && lifiRoute.netOutput ? parseFloat(lifiRoute.netOutput).toFixed(6) : "0",
+                    gas: lifiRoute && lifiRoute.estimatedGas ? parseFloat(lifiRoute.estimatedGas).toFixed(2) : "0.65"
                 },
                 uniswap: {
                     out: uniSim ? parseFloat(uniSim.estimatedAmountOut).toFixed(6) : "0",

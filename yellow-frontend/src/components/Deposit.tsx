@@ -33,7 +33,7 @@ export const Deposit: React.FC<Props> = ({ onSessionStarted }) => {
             const provider = new ethers.BrowserProvider((window as any).ethereum);
             const usdc = new ethers.Contract(USDC_ADDRESS, USDC_ABI, provider);
             const allowance = await usdc.allowance(userAddress, escrow);
-            const required = ethers.parseUnits('10', 6);
+            const required = ethers.parseUnits('10', 6); // Check against min deposit
             setNeedsApproval(allowance < required);
         } catch (err) {
             console.error("Allowance check failed:", err);
@@ -55,7 +55,15 @@ export const Deposit: React.FC<Props> = ({ onSessionStarted }) => {
             await tx.wait();
             setNeedsApproval(false);
         } catch (err: any) {
-            setError("Approval rejected or failed. Ensure Base Sepolia gas is present.");
+            console.error(err);
+            // Parse common wallet errors
+            if (err.code === 4001) {
+                setError("Transaction rejected by user.");
+            } else if (err.toString().includes("insufficient funds")) {
+                setError("Insufficient ETH for gas fees on Base Sepolia.");
+            } else {
+                setError(err.message || "Approval failed. Check console for details.");
+            }
         } finally {
             setLoading(false);
         }
@@ -63,7 +71,7 @@ export const Deposit: React.FC<Props> = ({ onSessionStarted }) => {
 
     const connectWallet = async () => {
         if (!(window as any).ethereum) {
-            setError("Web3 provider missing. Install MetaMask to interact with Base Sepolia.");
+            setError("Web3 provider missing.");
             return;
         }
         try {
@@ -88,13 +96,10 @@ export const Deposit: React.FC<Props> = ({ onSessionStarted }) => {
         try {
             console.log(`[Protocol] Dispatching createSession(sessionId, amount) to ${escrowAddress}`);
             const data = await api.adminStartSession(address, amount);
-
-            // Step 2: Initialize Agent Solver Off-Chain
             await api.startAgent(data.sessionId, strategy);
-
             onSessionStarted(data);
         } catch (err: any) {
-            setError(err.response?.data?.error || "On-chain vault initialization failed. Verify balance.");
+            setError(err.response?.data?.error || "Session initialization failed.");
         } finally {
             setLoading(false);
         }
@@ -108,7 +113,7 @@ export const Deposit: React.FC<Props> = ({ onSessionStarted }) => {
             </div>
 
             <div className="w-full fintech-card space-y-10 !p-10 !bg-white/[0.03]">
-                {/* 1. Wallet Status (Technical) */}
+                {/* 1. Wallet Status */}
                 {!address ? (
                     <button
                         onClick={connectWallet}
@@ -129,11 +134,10 @@ export const Deposit: React.FC<Props> = ({ onSessionStarted }) => {
                 {address && (
                     <>
                         <div className="space-y-4">
-                            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600 block ml-1">Execution Authorization Scoping</label>
+                            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600 block ml-1">Execution Scope</label>
                             <div className="grid grid-cols-1 gap-3">
                                 {[
-                                    { id: 'ACTIVE_REBALANCE', t: 'Atomic Swapping (v4 beforeSwap)', d: 'Authorized to trigger JIT liquidation via SessionGuardHook.' },
-                                    { id: 'HIGH_FREQ_SCAN', t: 'Read-Only Heuristics', d: 'Agent discovery without on-chain execution capability.' }
+                                    { id: 'ACTIVE_REBALANCE', t: 'Atomic Swapping (v4)', d: 'Authorized to trigger JIT liquidation via SessionGuardHook.' }
                                 ].map(s => (
                                     <div
                                         key={s.id}
@@ -150,9 +154,9 @@ export const Deposit: React.FC<Props> = ({ onSessionStarted }) => {
                             </div>
                         </div>
 
-                        {/* 3. On-Chain Deposit Leg */}
+                        {/* 3. Escrow Funding State */}
                         <div className="pt-4 space-y-6">
-                            <div className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600 ml-1">Vault Authorization Leg</div>
+                            <div className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600 ml-1">Escrow Funding</div>
 
                             {needsApproval ? (
                                 <div className="space-y-4">
@@ -164,16 +168,10 @@ export const Deposit: React.FC<Props> = ({ onSessionStarted }) => {
                                         {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : (
                                             <>
                                                 <span className="text-sm">Approve Session Funding</span>
-                                                <span className="text-[9px] opacity-60 font-mono mt-1">Escrow: {escrowAddress?.slice(0, 10)}...</span>
+                                                <span className="text-[9px] opacity-60 font-mono mt-1">Target: {escrowAddress?.slice(0, 10)}...</span>
                                             </>
                                         )}
                                     </button>
-                                    {approvalTx && (
-                                        <div className="text-center font-mono p-3 bg-white/5 rounded-xl border border-white/5">
-                                            <div className="text-[8px] text-slate-600 uppercase mb-1">Approval Broadast Successful</div>
-                                            <a href={`https://sepolia.basescan.org/tx/${approvalTx}`} target="_blank" className="text-[9px] text-blue-400/80 hover:text-blue-400 truncate block">{approvalTx}</a>
-                                        </div>
-                                    )}
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-2 gap-4">

@@ -44,6 +44,13 @@ export class YellowService {
     }
 
     /**
+     * Helper to get the Escrow Address with lazy loading of Env
+     */
+    private getEscrowAddress(): string {
+        return process.env.SESSION_ESCROW_ADDRESS || '0x83C522408955Bc57b1cbb2BA129Cc09320998290';
+    }
+
+    /**
      * Creates a new session on-chain via SessionEscrow.
      * 1. Requires user to have approved SESSION_ESCROW_ADDRESS for USDC.
      * 2. Calls createSession(sessionId, amount).
@@ -55,7 +62,9 @@ export class YellowService {
         console.log(`[YellowService] Starting on-chain session ${sessionId} for ${userAddress} with ${amount} USDC`);
 
         try {
-            const escrowContract = new ethers.Contract(SESSION_ESCROW_ADDRESS, SESSION_ESCROW_ABI, this.wallet);
+            const escrowAddr = this.getEscrowAddress();
+            console.log(`[YellowService] Using Escrow Address: ${escrowAddr}`);
+            const escrowContract = new ethers.Contract(escrowAddr, SESSION_ESCROW_ABI, this.wallet);
 
             console.log(`[YellowService] Executing SessionEscrow.createSession...`);
             // Note: This requires the USER to have approved the Escrow contract, 
@@ -87,7 +96,7 @@ export class YellowService {
         console.log(`[YellowService] Settling on-chain Session ${session.sessionId}...`);
 
         try {
-            const escrowContract = new ethers.Contract(SESSION_ESCROW_ADDRESS, SESSION_ESCROW_ABI, this.wallet);
+            const escrowContract = new ethers.Contract(this.getEscrowAddress(), SESSION_ESCROW_ABI, this.wallet);
 
             const [, onChainBalance] = await escrowContract.sessions(session.sessionId);
             const finalBalance = parseFloat(ethers.formatUnits(onChainBalance, 6));
@@ -173,7 +182,7 @@ export class YellowService {
     async spendFromEscrow(sessionId: string, recipient: string, amountUSD: number): Promise<string> {
         console.log(`[YellowService] On-chain Spend: ${amountUSD} USDC from session ${sessionId}`);
 
-        const contract = new ethers.Contract(SESSION_ESCROW_ADDRESS, SESSION_ESCROW_ABI, this.wallet);
+        const contract = new ethers.Contract(this.getEscrowAddress(), SESSION_ESCROW_ABI, this.wallet);
         const amountBase = ethers.parseUnits(amountUSD.toFixed(2), 6);
 
         const tx = await contract.spend(sessionId, recipient, amountBase);
@@ -188,7 +197,7 @@ export class YellowService {
      * Fetches real balance from the escrow contract.
      */
     async getEscrowBalance(sessionId: string): Promise<number> {
-        const contract = new ethers.Contract(SESSION_ESCROW_ADDRESS, SESSION_ESCROW_ABI, this.provider);
+        const contract = new ethers.Contract(this.getEscrowAddress(), SESSION_ESCROW_ABI, this.provider);
         const [, balance] = await contract.sessions(sessionId);
         return parseFloat(ethers.formatUnits(balance, 6));
     }

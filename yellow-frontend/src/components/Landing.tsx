@@ -27,9 +27,9 @@ export const Landing: React.FC<Props> = ({ onStart, onDemo }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full px-4 text-left">
                 {[
-                    { t: 'Session Escrow', d: 'Immutable capital lock on Base Sepolia.', i: '🛡️' },
-                    { t: 'v4 Hook Gate', d: 'Atomic beforeSwap authorization.', i: '⛓️' },
-                    { t: 'Solver Trace', d: 'Deterministic off-chain path discovery.', i: '🧠' }
+                    { t: 'Non-Custodial Vault', d: 'SessionEscrow.sol locks capital per session.', i: '🛡️' },
+                    { t: 'Atomic JIT Funding', d: 'Hook-triggered liquidity injection.', i: '⚡' },
+                    { t: 'Proof of Execution', d: 'Verifiable on-chain settlement logs.', i: '📜' }
                 ].map((f, i) => (
                     <div key={i} className="bg-white/5 border border-white/5 rounded-3xl p-6 space-y-2">
                         <div className="text-2xl">{f.i}</div>
@@ -44,24 +44,24 @@ export const Landing: React.FC<Props> = ({ onStart, onDemo }) => {
                     onClick={onStart}
                     className="group relative h-18 w-full rounded-[24px] bg-white hover:bg-slate-100 transition-all flex items-center justify-center overflow-hidden active:scale-95 shadow-2xl"
                 >
-                    <span className="text-black font-black uppercase tracking-[0.2em] text-base">Provision Session</span>
+                    <span className="text-black font-black uppercase tracking-[0.2em] text-base">Initialize Protocol</span>
                 </button>
 
                 <button
                     onClick={onDemo}
                     className="text-slate-600 hover:text-white transition-colors text-[10px] font-black uppercase tracking-[0.3em]"
                 >
-                    Review Safety Documentation
+                    View Architecture Spec
                 </button>
             </div>
 
             <div className="opacity-20 text-[9px] font-mono uppercase tracking-[0.4em] flex flex-col items-center space-y-2">
                 <div className="flex items-center space-x-3">
-                    <span>Verified Session V1.0.4</span>
+                    <span>Protocol v1.2 (Base Sepolia)</span>
                     <span className="w-1 h-1 bg-slate-700 rounded-full"></span>
-                    <span>DEX Integration: Uniswap V3</span>
+                    <span>Guard Hook: Active</span>
                 </div>
-                <span className="text-[8px] italic">"Capitalizing on information asymmetry through off-chain compute"</span>
+                <span className="text-[8px] italic">"Delegated execution with cryptographic finality"</span>
             </div>
         </div>
     );
